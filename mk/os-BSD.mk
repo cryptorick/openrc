@@ -14,5 +14,6 @@ PKG_PREFIX?=	/usr/local
 LOCAL_PREFIX?=  /usr/local
 PREFIX?=        /usr/local
 SFX=		.BSD.in
+BRANDING=\"TrueOS/$(uname -s)\"
 
 LIBKVM?=	-lkvm
