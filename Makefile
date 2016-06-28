@@ -16,7 +16,7 @@ include ${TOP}/Makefile.inc
 SUBDIR=		conf.d etc init.d local.d man scripts sh src sysctl.d
 
 # Build pkgconfig or not
-MKPKGCONFIG?=	yes
+MKPKGCONFIG?=	no
 ifeq (${MKPKGCONFIG},yes)
 SUBDIR+=	pkgconfig
 endif
