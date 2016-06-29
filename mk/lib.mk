@@ -17,7 +17,7 @@ SONAME?=		${SHLIB_NAME}
 
 SOBJS+=			${SRCS:.c=.So}
 
-MKSTATICLIBS?=  yes
+MKSTATICLIBS?=  no
 ifeq (${MKSTATICLIBS},yes)
 OBJS+=			${SRCS:.c=.o}
 _LIBS+=			lib${LIB}.a
