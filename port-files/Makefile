@@ -25,4 +25,20 @@ USE_GITHUB=     yes
 GH_TUPLE=       trueos:openrc:%%GHTAG%% \
                 trueos:freebsd:31eb7bb:freebsd
 
+.include <bsd.port.pre.mk>
+
+post-extract:
+	@${MKDIR} ${WRKSRC}/src/github.com/freebsd
+	@${MV} ${WRKSRC_freebsd} ${WRKSRC}/src/github.com/freebsd/freebsd
+
+post-configure:
+	@${REINPLACE_CMD} -e 's|/etc/rc|/usr/local/etc/rc|g' ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/init.c
+	@${REINPLACE_CMD} -e 's|/etc/rc|/usr/local/etc/rc|g' ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/pathnames.h
+	@cd ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init; make
+	@${MKDIR} ${STAGEDIR}${PREFIX}/sbin/
+	${INSTALL_PROGRAM} ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/init ${STAGEDIR}${PREFIX}/sbin/
+
+.include <bsd.port.post.mk>
+
+
 .include <bsd.port.mk>
