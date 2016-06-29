@@ -15,7 +15,6 @@ LICENSE=	BSD2CLAUSE
 USE_LDCONFIG=	yes
 USES=		gmake pkgconfig:both
 
-USE_RC_SUBR+=	openrc
 PKGMESSAGE=	${WRKDIR}/pkg-message
 SUB_FILES+=	pkg-message
 
