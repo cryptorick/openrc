@@ -22,7 +22,7 @@ STRIP=		# stripping can break openrc scripts
 
 USE_GITHUB=     yes
 GH_TUPLE=       trueos:openrc:%%GHTAG%% \
-                trueos:freebsd:31eb7bb:freebsd
+		trueos:freebsd:31eb7bb:freebsd
 
 .include <bsd.port.pre.mk>
 
