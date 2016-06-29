@@ -31,6 +31,9 @@ post-extract:
 	@${MV} ${WRKSRC_freebsd} ${WRKSRC}/src/github.com/freebsd/freebsd
 
 post-configure:
+	@${REINPLACE_CMD} -e 's|/sbin/openrc|/usr/local/sbin/openrc|g' ${WRKSRC}/etc/rc.in
+	@${REINPLACE_CMD} -e 's|/sbin/openrc|/usr/local/sbin/openrc|g' ${WRKSRC}/etc/rc.shutdown.in
+	@${REINPLACE_CMD} -e 's|/etc/init.d|/usr/local/etc/init.d|g' ${WRKSRC}/etc/rc.devd
 	@${REINPLACE_CMD} -e 's|/etc/rc|/usr/local/etc/rc|g' ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/init.c
 	@${REINPLACE_CMD} -e 's|/etc/rc|/usr/local/etc/rc|g' ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/pathnames.h
 	@cd ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init; make
