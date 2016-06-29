@@ -39,6 +39,3 @@ post-configure:
 	${INSTALL_PROGRAM} ${WRKSRC}/src/github.com/freebsd/freebsd/sbin/init/init ${STAGEDIR}${PREFIX}/sbin/
 
 .include <bsd.port.post.mk>
-
-
-.include <bsd.port.mk>
