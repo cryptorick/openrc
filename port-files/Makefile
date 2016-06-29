@@ -22,8 +22,7 @@ SUB_FILES+=	pkg-message
 STRIP=		# stripping can break openrc scripts
 
 USE_GITHUB=     yes
-GH_ACCOUNT=     trueos
-GH_PROJECT=     openrc
-GH_TAGNAME=     %%GHTAG%%
+GH_TUPLE=       trueos:openrc:%%GHTAG%% \
+                trueos:freebsd:31eb7bb:freebsd
 
 .include <bsd.port.mk>
