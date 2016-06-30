@@ -2,23 +2,17 @@
 # Copyright (c) 2016 Joe Maloney <jmaloney@ixsystems.com>
 # Released under the 2-clause BSD license.
 
-command=/usr/local/sbin/PCDMd
-command_args=$pcdm_args
 name="TrueOS Display Manager"
 
 depend() {
-	after dbus
+	need urandom dbus
+	after bootmisc
 }
 
-start_pre() {
-  	# Check if boot-loader set option to skip xorg
-  	if [ "`kenv noxorg 2>/dev/null`" = "YES" ] ; then
-           return 0
-        fi
-
+start() {
+	/usr/sbin/service pcdm start
 }
 
 stop_post() {
-	#Send the PCDM daemon the signal not to start a new session after this one finishes
-	${command} stop
+	/usr/sbin/service pcdm stop
 }
