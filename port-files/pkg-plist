@@ -93,6 +93,8 @@ etc/runlevels/boot/syscons
 etc/runlevels/boot/sysctl
 etc/runlevels/boot/syslogd
 etc/runlevels/boot/urandom
+etc/runlevels/boot/zfs
+etc/runlevels/boot/zvol
 etc/runlevels/default/local
 etc/runlevels/default/netmount
 etc/runlevels/nonetwork/local
