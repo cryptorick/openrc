@@ -37,6 +37,7 @@ etc/init.d/loopback
 etc/init.d/mixer
 etc/init.d/moused
 etc/init.d/named
+etc/init.d/netif
 etc/init.d/netmount
 etc/init.d/network
 etc/init.d/newsyslog
