@@ -9,7 +9,7 @@
 # This file may not be copied, modified, propagated, or distributed
 # except according to the terms contained in the LICENSE file.
 
-command=@PKG_PREFIX@/bin/dbus-daemon
+command=/usr/local/bin/dbus-daemon
 pidfile=@VARBASE@/run/dbus/pid
 command_args="${dbusd_args---system}"
 name="Message Bus Daemon"
