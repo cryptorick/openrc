@@ -7,7 +7,7 @@ command_args=$pcdm_args
 name="TrueOS Display Manager"
 
 depend() {
-	after bootmisc netmount
+	after dbus
 }
 
 start_pre() {
