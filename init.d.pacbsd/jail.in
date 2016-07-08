@@ -778,7 +778,7 @@ start()
 			#	cd "${_devdir}"
 			#	ln -sf ../var/log/console console
 			#	cd "$__pwd"
-		fi
+		then
 		if yesno _fdescfs; then
 			if is_symlinked_mountpoint ${_fdescdir}; then
 				ewarn "${_fdescdir} has symlink as parent, not mounting"
@@ -843,7 +843,7 @@ start()
 			tail +2 ${_tmp_jail}
 		fi
 		rm -f ${_tmp_jail}
-	done
+	fi
 	rmdir ${_tmp_dir}
 	eend
 }

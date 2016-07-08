@@ -41,5 +41,5 @@ start() {
 }
 
 stop_post() {
-	{command} stop
+	${command} stop
 }
