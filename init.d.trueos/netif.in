@@ -8,7 +8,7 @@ depend()
 	need localmount
 	use logger
 	after bootmisc modules pcdm
-	before dns dhcpcd
+	before dns
 }
 
 start() {
