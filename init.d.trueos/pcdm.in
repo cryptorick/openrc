@@ -2,9 +2,9 @@
 # Copyright (c) 2016 Joe Maloney <jmaloney@ixsystems.com>
 # Released under the 2-clause BSD license.
 
-command=/usr/local/sbin/PCDMd
+command=/usr/local/bin/startx
 pid=/var/run/PCDMd.pid
-command_args=$PCDMd_args
+command_args="$PCDMd_args /usr/local/bin/PCDM-session"
 name="TrueOS Display Manager"
 
 depend() {
@@ -37,7 +37,7 @@ start() {
       fi
       ${command} ${command_args} 
     fi
-  ) 
+  ) &
 }
 
 stop_post() {
