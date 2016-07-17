@@ -4,6 +4,7 @@ etc/conf.d/fsck
 etc/conf.d/hostname
 etc/conf.d/ipfw
 etc/conf.d/localmount
+etc/conf.d/modules
 etc/conf.d/moused
 etc/conf.d/netmount
 etc/conf.d/network
@@ -35,6 +36,7 @@ etc/init.d/local
 etc/init.d/localmount
 etc/init.d/loopback
 etc/init.d/mixer
+etc/init.d/modules
 etc/init.d/moused
 etc/init.d/named
 etc/init.d/netif
@@ -82,6 +84,7 @@ etc/runlevels/boot/hostid
 etc/runlevels/boot/hostname
 etc/runlevels/boot/localmount
 etc/runlevels/boot/loopback
+etc/runlevels/boot/modules
 etc/runlevels/boot/network
 etc/runlevels/boot/newsyslog
 etc/runlevels/boot/root
