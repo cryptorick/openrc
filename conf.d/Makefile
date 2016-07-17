@@ -1,13 +1,13 @@
 include ../mk/net.mk
 
 DIR=	${CONFDIR}
-CONF=	bootmisc fsck hostname localmount modules netmount urandom tmpfiles \
-		${CONF-${OS}}
+CONF=	bootmisc fsck hostname localmount netmount urandom tmpfiles \
+	${CONF-${OS}}
 
 ifeq (${MKNET},yes)
-CONF+= network staticroute
-TARGETS+=	network staticroute
-CLEANFILES+=	network staticroute
+CONF+= modules network staticroute
+TARGETS+=	modules network staticroute
+CLEANFILES+=	modules network staticroute
 endif
 
 MK=	../mk
@@ -22,7 +22,7 @@ CONF-NetBSD=	moused rarpd savecore
 
 include ${MK}/scripts.mk
 
-modules: modules.in modules${SFX}
+modules: modules${SFX}
 	cp $@${SFX} $@
 
 network: network.in network${SFX}
