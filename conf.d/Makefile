@@ -23,7 +23,7 @@ CONF-NetBSD=	moused rarpd savecore
 include ${MK}/scripts.mk
 
 modules: modules.in modules${SFX}
-        cp $@${SFX} $@
+	cp $@${SFX} $@
 
 network: network.in network${SFX}
 	cat $^ > $@
