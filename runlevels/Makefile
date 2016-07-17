@@ -34,7 +34,7 @@ BOOT-BSD=	hostid newsyslog savecore syslogd swap-blk
 # Generic BSD stuff
 BOOT-FreeBSD+=	hostid newsyslog savecore syslogd
 # FreeBSD specific stuff
-BOOT-FreeBSD+=	adjkerntz dumpon syscons zfs zvol
+BOOT-FreeBSD+=	adjkerntz dumpon modules syscons zfs zvol
 
 BOOT-Linux+=	binfmt hwclock keymaps modules mtab procfs termencoding \
 	tmpfiles.setup
