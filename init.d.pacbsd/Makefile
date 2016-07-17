@@ -1,5 +1,5 @@
 DIR=	${INITDIR}
-SRCS=	cron.in jail.in zfs.in zvol.in
+SRCS=	cron.in jail.in
 BIN=    ${OBJS}
 
 MK=	../mk
