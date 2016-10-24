@@ -86,6 +86,12 @@ const char *usagestring = ""					\
 #define DEVBOOT			"/dev/.rcboot"
 
 const char *applet = NULL;
+static RC_STRINGLIST *main_hotplugged_services;
+static RC_STRINGLIST *main_stop_services;
+static RC_STRINGLIST *main_start_services;
+static RC_STRINGLIST *main_types_nw;
+static RC_STRINGLIST *main_types_nwua;
+static RC_DEPTREE *main_deptree;
 static char *runlevel;
 static RC_HOOK hook_out;
 
@@ -127,10 +133,8 @@ clean_failed(void)
 static void
 cleanup(void)
 {
-#ifdef DEBUG_MEMORY
 	RC_PID *p1 = LIST_FIRST(&service_pids);
 	RC_PID *p2;
-#endif
 
 	if (!rc_in_logger && !rc_in_plugin &&
 	    applet && (strcmp(applet, "rc") == 0 || strcmp(applet, "openrc") == 0))
@@ -152,21 +156,19 @@ cleanup(void)
 		rc_logger_close();
 	}
 
-#ifdef DEBUG_MEMORY
 	while (p1) {
 		p2 = LIST_NEXT(p1, entries);
 		free(p1);
 		p1 = p2;
 	}
 
-	rc_stringlist_free(hotplugged_services);
-	rc_stringlist_free(stop_services);
-	rc_stringlist_free(start_services);
-	rc_stringlist_free(types_nw);
-	rc_stringlist_free(types_nwua);
-	rc_deptree_free(deptree);
+	rc_stringlist_free(main_hotplugged_services);
+	rc_stringlist_free(main_stop_services);
+	rc_stringlist_free(main_start_services);
+	rc_stringlist_free(main_types_nw);
+	rc_stringlist_free(main_types_nwua);
+	rc_deptree_free(main_deptree);
 	free(runlevel);
-#endif
 }
 
 static char
@@ -662,7 +664,6 @@ do_start_services(const RC_STRINGLIST *start_services, bool parallel)
 			interactive = want_interactive();
 
 		if (interactive) {
-			parallel = false;
 	interactive_retry:
 			printf("\n");
 			einfo("About to start the service %s",
@@ -735,12 +736,6 @@ int main(int argc, char **argv)
 	const char *bootlevel = NULL;
 	char *newlevel = NULL;
 	const char *systype = NULL;
-	static RC_STRINGLIST *hotplugged_services;
-	static RC_STRINGLIST *stop_services;
-	static RC_STRINGLIST *start_services;
-	static RC_STRINGLIST *types_nw;
-	static RC_STRINGLIST *types_nwua;
-	static RC_DEPTREE *deptree;
 	RC_STRINGLIST *deporder = NULL;
 	RC_STRINGLIST *tmplist;
 	RC_STRING *service;
@@ -943,7 +938,7 @@ int main(int argc, char **argv)
 	}
 
 	/* Load our deptree */
-	if ((deptree = _rc_deptree_load(0, &regen)) == NULL)
+	if ((main_deptree = _rc_deptree_load(0, &regen)) == NULL)
 		eerrorx("failed to load deptree");
 	if (exists(RC_DEPTREE_SKEWED))
 		ewarn("WARNING: clock skew detected!");
@@ -965,27 +960,27 @@ int main(int argc, char **argv)
 	* in the new or current runlevel so we won't actually be stopping
 	* them all.
 	*/
-	stop_services = rc_services_in_state(RC_SERVICE_STARTED);
+	main_stop_services = rc_services_in_state(RC_SERVICE_STARTED);
 	tmplist = rc_services_in_state(RC_SERVICE_INACTIVE);
-	TAILQ_CONCAT(stop_services, tmplist, entries);
+	TAILQ_CONCAT(main_stop_services, tmplist, entries);
 	free(tmplist);
 	tmplist = rc_services_in_state(RC_SERVICE_STARTING);
-	TAILQ_CONCAT(stop_services, tmplist, entries);
+	TAILQ_CONCAT(main_stop_services, tmplist, entries);
 	free(tmplist);
-	if (stop_services)
-		rc_stringlist_sort(&stop_services);
+	if (main_stop_services)
+		rc_stringlist_sort(&main_stop_services);
 
-	types_nwua = rc_stringlist_new();
-	rc_stringlist_add(types_nwua, "ineed");
-	rc_stringlist_add(types_nwua, "iwant");
-	rc_stringlist_add(types_nwua, "iuse");
-	rc_stringlist_add(types_nwua, "iafter");
+	main_types_nwua = rc_stringlist_new();
+	rc_stringlist_add(main_types_nwua, "ineed");
+	rc_stringlist_add(main_types_nwua, "iwant");
+	rc_stringlist_add(main_types_nwua, "iuse");
+	rc_stringlist_add(main_types_nwua, "iafter");
 
-	if (stop_services) {
-		tmplist = rc_deptree_depends(deptree, types_nwua, stop_services,
+	if (main_stop_services) {
+		tmplist = rc_deptree_depends(main_deptree, main_types_nwua, main_stop_services,
 		    runlevel, depoptions | RC_DEP_STOP);
-		rc_stringlist_free(stop_services);
-		stop_services = tmplist;
+		rc_stringlist_free(main_stop_services);
+		main_stop_services = tmplist;
 	}
 
 	/* Create a list of all services which should be started for the new or
@@ -993,14 +988,14 @@ int main(int argc, char **argv)
 	 * runlevels.  Clearly, some of these will already be started so we
 	 * won't actually be starting them all.
 	 */
-	hotplugged_services = rc_services_in_state(RC_SERVICE_HOTPLUGGED);
-	start_services = rc_services_in_runlevel_stacked(newlevel ?
+	main_hotplugged_services = rc_services_in_state(RC_SERVICE_HOTPLUGGED);
+	main_start_services = rc_services_in_runlevel_stacked(newlevel ?
 	    newlevel : runlevel);
 	if (strcmp(newlevel ? newlevel : runlevel, RC_LEVEL_SHUTDOWN) != 0 &&
 	    strcmp(newlevel ? newlevel : runlevel, RC_LEVEL_SYSINIT) != 0)
 	{
 		tmplist = rc_services_in_runlevel(RC_LEVEL_SYSINIT);
-		TAILQ_CONCAT(start_services, tmplist, entries);
+		TAILQ_CONCAT(main_start_services, tmplist, entries);
 		free(tmplist);
 		/* If we are NOT headed for the single-user runlevel... */
 		if (strcmp(newlevel ? newlevel : runlevel,
@@ -1011,13 +1006,13 @@ int main(int argc, char **argv)
 				bootlevel) != 0)
 			{
 				tmplist = rc_services_in_runlevel(bootlevel);
-				TAILQ_CONCAT(start_services, tmplist, entries);
+				TAILQ_CONCAT(main_start_services, tmplist, entries);
 				free(tmplist);
 			}
-			if (hotplugged_services) {
-				TAILQ_FOREACH(service, hotplugged_services,
+			if (main_hotplugged_services) {
+				TAILQ_FOREACH(service, main_hotplugged_services,
 				    entries)
-				    rc_stringlist_addu(start_services,
+				    rc_stringlist_addu(main_start_services,
 					service->value);
 			}
 		}
@@ -1026,8 +1021,8 @@ int main(int argc, char **argv)
 	parallel = rc_conf_yesno("rc_parallel");
 
 	/* Now stop the services that shouldn't be running */
-	if (stop_services && !nostop)
-		do_stop_services(types_nw, start_services, stop_services, deptree, newlevel, parallel, going_down);
+	if (main_stop_services && !nostop)
+		do_stop_services(main_types_nw, main_start_services, main_stop_services, main_deptree, newlevel, parallel, going_down);
 
 	/* Wait for our services to finish */
 	wait_for_services();
@@ -1059,8 +1054,8 @@ int main(int argc, char **argv)
 	hook_out = RC_HOOK_RUNLEVEL_START_OUT;
 
 	/* Re-add our hotplugged services if they stopped */
-	if (hotplugged_services)
-		TAILQ_FOREACH(service, hotplugged_services, entries)
+	if (main_hotplugged_services)
+		TAILQ_FOREACH(service, main_hotplugged_services, entries)
 		    rc_service_mark(service->value, RC_SERVICE_HOTPLUGGED);
 
 #ifdef __linux__
@@ -1076,7 +1071,7 @@ int main(int argc, char **argv)
 #endif
 
 	/* If we have a list of services to start then... */
-	if (start_services) {
+	if (main_start_services) {
 		/* Get a list of the chained runlevels which compose the target runlevel */
 		RC_STRINGLIST *runlevel_chain = rc_runlevel_stacks(runlevel);
 
@@ -1089,7 +1084,7 @@ int main(int argc, char **argv)
 
 			/* Start those services. */
 			rc_stringlist_sort(&run_services);
-			deporder = rc_deptree_depends(deptree, types_nwua, run_services, rlevel->value, depoptions | RC_DEP_START);
+			deporder = rc_deptree_depends(main_deptree, main_types_nwua, run_services, rlevel->value, depoptions | RC_DEP_START);
 			rc_stringlist_free(run_services);
 			run_services = deporder;
 			do_start_services(run_services, parallel);

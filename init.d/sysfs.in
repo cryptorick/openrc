@@ -15,7 +15,8 @@ sysfs_opts=nodev,noexec,nosuid
 
 depend()
 {
-	keyword -lxc -prefix -systemd-nspawn -vserver
+	want modules
+	keyword -docker -lxc -prefix -systemd-nspawn -vserver
 }
 
 mount_sys()
@@ -97,17 +98,23 @@ mount_misc()
 		fi
 	fi
 
-	# setup up kernel support for efivarfs
-	# slightly complicated, as if it's build as a module but NOT yet loaded,
-	# it will NOT appear in /proc/filesystems yet
-	if [ -d /sys/firmware/efi/efivars ] \
-		&& ! mountinfo -q /sys/firmware/efi/efivars; then
-		modprobe -q efivarfs
-		if grep -qs efivarfs /proc/filesystems; then
-			ebegin "Mounting efivarfs filesystem"
-			mount -n -t efivarfs -o ${sysfs_opts} \
-				efivarfs /sys/firmware/efi/efivars
-			eend $?
+	# set up kernel support for efivarfs
+	# The presence of /sys/firmware/efi indicates that the system was
+	# booted in efi mode.
+	if [ -d /sys/firmware/efi ]; then
+		if [ ! -d /sys/firmware/efi/efivars ] &&
+			modprobe -q efivarfs; then
+			ewarn "The efivarfs module needs to be configured in " \
+				  "@SYSCONFDIR@/conf.d/modules or built in"
+		fi
+		if [ -d /sys/firmware/efi/efivars ] &&
+			! mountinfo -q /sys/firmware/efi/efivars; then
+			if grep -qs efivarfs /proc/filesystems; then
+				ebegin "Mounting efivarfs filesystem"
+				mount -n -t efivarfs -o ${sysfs_opts} \
+					efivarfs /sys/firmware/efi/efivars
+				eend $?
+			fi
 		fi
 	fi
 }

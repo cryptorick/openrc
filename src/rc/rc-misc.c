@@ -53,6 +53,7 @@ static const char *const env_whitelist[] = {
 	"EERROR_QUIET", "EINFO_QUIET",
 	"IN_BACKGROUND", "IN_HOTPLUG",
 	"LANG", "LC_MESSAGES", "TERM",
+	"EINFO_COLOR", "EINFO_VERBOSE",
 	NULL
 };
 
@@ -110,11 +111,9 @@ env_filter(void)
 			setenv(env->value, e + 1, 1);
 	}
 
-#ifdef DEBUG_MEMORY
 	rc_stringlist_free(env_list);
 	rc_stringlist_free(env_allow);
 	rc_stringlist_free(profile);
-#endif
 }
 
 void

@@ -19,6 +19,9 @@ supervise_start()
 	fi
 
 	ebegin "Starting ${name:-$RC_SVCNAME}"
+	# The eval call is necessary for cases like:
+	# command_args="this \"is a\" test"
+	# to work properly.
 	eval supervise-daemon --start \
 		${chroot:+--chroot} $chroot \
 		${pidfile:+--pidfile} $pidfile \
@@ -31,7 +34,7 @@ supervise_start()
 		[ -n "${chroot}" ] && service_set_value "chroot" "${chroot}"
 		[ -n "${pidfile}" ] && service_set_value "pidfile" "${pidfile}"
 	fi
-	eend $rc "failed to start $RC_SVCNAME"
+	eend $rc "failed to start ${name:-$RC_SVCNAME}"
 }
 
 supervise_stop()
@@ -46,7 +49,7 @@ supervise_stop()
 		${pidfile:+--pidfile} $chroot$pidfile \
 		${stopsig:+--signal} $stopsig
 
-	eend $? "Failed to stop $RC_SVCNAME"
+	eend $? "Failed to stop ${name:-$RC_SVCNAME}"
 }
 
 supervise_status()

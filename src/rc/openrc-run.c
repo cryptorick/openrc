@@ -247,7 +247,6 @@ cleanup(void)
 
 	rc_plugin_unload();
 
-#ifdef DEBUG_MEMORY
 	rc_stringlist_free(deptypes_b);
 	rc_stringlist_free(deptypes_n);
 	rc_stringlist_free(deptypes_nw);
@@ -267,7 +266,6 @@ cleanup(void)
 	free(service);
 	free(prefix);
 	free(runlevel);
-#endif
 }
 
 /* Buffer and lock all output messages so that we get readable content */
@@ -1097,9 +1095,7 @@ service_plugable(void)
 			break;
 		}
 	}
-#ifdef DEBUG_MEMORY
 	free(list);
-#endif
 	return allow;
 }
 
@@ -1172,9 +1168,6 @@ int main(int argc, char **argv)
 
 	if (argc < 3)
 		usage(EXIT_FAILURE);
-
-	if (runscript)
-		ewarn("%s uses runscript, please convert to openrc-run.", service);
 
 	/* Change dir to / to ensure all init scripts don't use stuff in pwd */
 	if (chdir("/") == -1)
@@ -1295,6 +1288,9 @@ int main(int argc, char **argv)
 	applet_list = rc_stringlist_new();
 	rc_stringlist_add(applet_list, applet);
 
+	if (runscript)
+		ewarn("%s uses runscript, please convert to openrc-run.", service);
+
 	/* Now run each option */
 	retval = EXIT_SUCCESS;
 	while (optind < argc) {
@@ -1348,6 +1344,7 @@ int main(int argc, char **argv)
 			    applet_list,
 			    runlevel, depoptions);
 			rc_stringlist_free(tmplist);
+			tmplist = NULL;
 			TAILQ_FOREACH(svc, services, entries)
 			    printf("%s ", svc->value);
 			printf ("\n");

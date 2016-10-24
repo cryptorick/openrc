@@ -1,9 +1,10 @@
+
 include ../mk/net.mk
 
 DIR=	${INITDIR}
 SRCS=	bootmisc.in fsck.in hostname.in local.in localmount.in loopback.in \
-	modules.in netmount.in osclock.in root.in savecache.in swap.in swapfiles.in \
-	tmpfiles.setup.in swclock.in sysctl.in urandom.in s6-svscan.in ${SRCS-${OS}}
+	netmount.in osclock.in root.in savecache.in swap.in tmpfiles.setup.in  \
+	swclock.in sysctl.in runsvdir.in urandom.in s6-svscan.in ${SRCS-${OS}}
 BIN=	${OBJS}
 
 # Are we installing our network scripts?
@@ -15,14 +16,16 @@ MK=	../mk
 include ${MK}/os.mk
 
 # Generic BSD scripts
-SRCS-FreeBSD=	hostid.in moused.in newsyslog.in pf.in rarpd.in rc-enabled.in \
-		rpcbind.in savecore.in syslogd.in
+SRCS-FreeBSD=	hostid.in modules.in moused.in newsyslog.in pf.in rarpd.in \
+		rc-enabled.in rpcbind.in savecore.in syslogd.in
 # These are FreeBSD specific
 SRCS-FreeBSD+=	adjkerntz.in devd.in dumpon.in encswap.in ipfw.in \
-		mixer.in nscd.in powerd.in syscons.in zfs.in zvol.in
+		modules.in modules-load.in mixer.in nscd.in powerd.in syscons.in \
+		zfs.in zvol.in
 
 SRCS-Linux=	binfmt.in devfs.in dmesg.in hwclock.in consolefont.in keymaps.in \
-		killprocs.in mount-ro.in mtab.in numlock.in \
+		killprocs.in modules.in modules-load.in mount-ro.in mtab.in 
+numlock.in \
 		procfs.in net-online.in sysfs.in termencoding.in tmpfiles.dev.in
 
 # Generic BSD scripts
@@ -30,9 +33,6 @@ SRCS-NetBSD=	hostid.in moused.in newsyslog.in pf.in rarpd.in rc-enabled.in \
 		rpcbind.in savecore.in syslogd.in
 # These are NetBSD specific
 SRCS-NetBSD+=	devdb.in swap-blk.in ttys.in wscons.in
-
-%.in: %${SFX}
-	sed ${SED_REPLACE} ${SED_EXTRA} $< > $@
 
 include ${MK}/scripts.mk
 

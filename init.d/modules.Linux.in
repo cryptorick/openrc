@@ -14,10 +14,22 @@ description="Loads a user defined list of kernel modules."
 depend()
 {
 	use isapnp
-	keyword -openvz -prefix -systemd-nspawn -vserver -lxc
+	want modules-load
+	keyword -docker -lxc -openvz -prefix -systemd-nspawn -vserver
 }
 
-start()
+FreeBSD_modules()
+{
+	local cnt=0 x
+	for x in $modules; do
+		ebegin "Loading module $x"
+		kldload "$x"
+		eend $? "Failed to load $x" && : $(( cnt += 1 ))
+	done
+	einfo "Autoloaded $cnt module(s)"
+}
+
+Linux_modules()
 {
 	# Should not fail if kernel do not have module
 	# support compiled in ...
@@ -63,8 +75,17 @@ start()
 		done
 		[ -z "$args" ] && eval args=\$module_${aa}_args
 		[ -z "$args" ] && eval args=\$module_${xx}_args
-		eval modprobe -q "$mpargs" "$x" "$args"
+		eval modprobe --use-blacklist -q "$mpargs" "$x" "$args"
 		eend $? "Failed to load $x" && : $(( cnt += 1 ))
 	done
 	einfo "Autoloaded $cnt module(s)"
+}
+
+start()
+{
+	case "$RC_UNAME" in
+		FreeBSD|Linux) ${RC_UNAME}_modules ;;
+		*) ;;
+	esac
+	return 0
 }

@@ -10,8 +10,10 @@
 # http://projects.archlinux.org/initscripts.git/tree/arch-tmpfiles
 #
 # See the tmpfiles.d manpage as well:
+# https://www.freedesktop.org/software/systemd/man/tmpfiles.d.html
+# This script should match the old manpage
 # http://0pointer.de/public/systemd-man/tmpfiles.d.html
-# This script should match the manpage as of 2012/03/12
+# as of 2012/03/12 and also implements some more recent features
 #
 
 DRYRUN=0
@@ -33,10 +35,26 @@ warninvalid() {
 	error=$(( error+1 ))
 } >&2
 
+invalid_option() {
+	printf "tmpfiles: invalid option '%s'\n" "$1" >&2
+	exit 1
+}
+
 dryrun_or_real() {
 	local dryrun=
 	[ $DRYRUN -eq 1 ] && dryrun=echo
 	$dryrun "$@"
+}
+
+_chattr() {
+	local attr="$2"
+	case $attr in
+		[+-=]*) : ;;
+		'') return ;;
+		*) attr="+$attr" ;;
+	esac
+	local IFS=
+	dryrun_or_real chattr $1 "$attr" -- $3
 }
 
 relabel() {
@@ -158,6 +176,37 @@ _v() {
 	_d "$@"
 }
 
+_q() {
+	# Similar to _v. However, make sure that the subvolume will be assigned
+	# to the same higher-level quota groups as the subvolume it has
+	# been created in.
+	# TODO: Implement btrfs subvol creation.
+	_d "$@"
+}
+
+_Q() {
+	# Similar to q. However, instead of copying the higher-level quota
+	# group assignments from the parent as-is, the lowest quota group
+	# of the parent subvolume is determined that is not the
+	# leaf quota group.
+	# TODO: Implement btrfs subvol creation.
+	_d "$@"
+}
+
+_h() {
+	# Set file/directory attributes. Lines of this type accept
+	# shell-style globs in place of normal path names.
+	# The format of the argument field matches chattr
+	_chattr '' "$6" "$1"
+}
+
+_H() {
+	# Recursively set file/directory attributes. Lines of this type accept
+	# shell-syle globs in place of normal path names.
+	# Does not follow symlinks
+	_chattr -R "$6" "$1"
+}
+
 _L() {
 	# Create a symlink if it doesn't exist yet
 	local path=$1 mode=$2 uid=$3 gid=$4 age=$5 arg=$6
@@ -259,35 +308,7 @@ _Z() {
 BOOT=0 CREATE=0 REMOVE=0 CLEAN=0 VERBOSE=0 DRYRUN=0 error=0 LINENO=0
 EXCLUDE=
 PREFIX=
-FILE=
-fragments=
-# XXX: The harcoding of /usr/lib/ is an explicit choice by upstream
-tmpfiles_dirs='/usr/lib/tmpfiles.d/ /run/tmpfiles.d/ /etc/tmpfiles.d/'
-tmpfiles_basenames=''
-tmpfiles_d=''
-# Build a list of sorted unique basenames
-# directories declared later in the tmpfiles_d array will override earlier
-# directories, on a per file basename basis.
-# `/etc/tmpfiles.d/foo.conf' supersedes `/usr/lib/tmpfiles.d/foo.conf'.
-# `/run/tmpfiles/foo.conf' will always be read after `/etc/tmpfiles.d/bar.conf'
-for d in ${tmpfiles_dirs} ; do
-	[ -d $d ] && for f in ${d}/*.conf ; do
-		case "${f##*/}" in
-			systemd.conf|systemd-*.conf) continue;;
-		esac
-		[ -f $f ] && tmpfiles_basenames="${tmpfiles_basenames}\n${f##*/}"
-	done # for f in ${d}
-done # for d in ${tmpfiles_dirs}
-tmpfiles_basenames="$(printf "${tmpfiles_basenames}\n" | sort -u )"
-
-for b in $tmpfiles_basenames ; do
-	real_f=''
-	for d in $tmpfiles_dirs ; do
-		f=${d}/${b}
-		[ -f "${f}" ] && real_f=$f
-	done
-	[ -f "${real_f}" ] && tmpfiles_d="${tmpfiles_d} ${real_f}"
-done
+FILES=
 
 while [ $# -gt 0 ]; do
 	case $1 in
@@ -299,6 +320,8 @@ while [ $# -gt 0 ]; do
 		--dryrun|--dry-run) DRYRUN=1 ;;
 		--exclude-prefix=*) EXCLUDE="${EXCLUDE}${1##--exclude-prefix=} " ;;
 		--prefix=*) PREFIX="${PREFIX}${1##--prefix=} " ;;
+		-*) invalid_option "$1" ;;
+		*) FILES="${FILES} $1"
 	esac
 	shift
 done
@@ -313,10 +336,49 @@ if [ "$CREATE$REMOVE" = '00' ]; then
 	exit 1
 fi
 
+# XXX: The harcoding of /usr/lib/ is an explicit choice by upstream
+tmpfiles_dirs='/usr/lib/tmpfiles.d /run/tmpfiles.d /etc/tmpfiles.d'
+tmpfiles_basenames=''
+
+if [ -z "${FILES}" ]; then
+	# Build a list of sorted unique basenames
+	# directories declared later in the tmpfiles_d array will override earlier
+	# directories, on a per file basename basis.
+	# `/etc/tmpfiles.d/foo.conf' supersedes `/usr/lib/tmpfiles.d/foo.conf'.
+	# `/run/tmpfiles/foo.conf' will always be read after `/etc/tmpfiles.d/bar.conf'
+	for d in ${tmpfiles_dirs} ; do
+		[ -d $d ] && for f in ${d}/*.conf ; do
+			case "${f##*/}" in
+				systemd.conf|systemd-*.conf) continue;;
+			esac
+			[ -f $f ] && tmpfiles_basenames="${tmpfiles_basenames}\n${f##*/}"
+		done # for f in ${d}
+	done # for d in ${tmpfiles_dirs}
+	FILES="$(printf "${tmpfiles_basenames}\n" | sort -u )"
+fi
+
+tmpfiles_d=''
+
+for b in ${FILES} ; do
+	if [ "${b##*/}" != "${b}" ]; then
+		# The user specified a path on the command line
+		# Just pass it through unaltered
+		tmpfiles_d="${tmpfiles_d} ${b}"
+	else
+		real_f=''
+		for d in $tmpfiles_dirs ; do
+			f=${d}/${b}
+			[ -f "${f}" ] && real_f=$f
+		done
+		[ -f "${real_f}" ] && tmpfiles_d="${tmpfiles_d} ${real_f}"
+	fi
+done
+
 error=0
 
 # loop through the gathered fragments, sorted globally by filename.
 # `/run/tmpfiles/foo.conf' will always be read after `/etc/tmpfiles.d/bar.conf'
+FILE=
 for FILE in $tmpfiles_d ; do
 	LINENUM=0
 
@@ -353,7 +415,7 @@ for FILE in $tmpfiles_d ; do
 
 		# whine about invalid entries
 		case $cmd in
-			f|F|w|d|D|v|p|L|c|C|b|x|X|r|R|z|Z) ;;
+			f|F|w|d|D|v|p|L|c|C|b|x|X|r|R|z|Z|q|Q|h|H) ;;
 			*) warninvalid ; continue ;;
 		esac
 

@@ -1,7 +1,7 @@
 include ../mk/net.mk
 
 BOOT=		bootmisc fsck hostname localmount loopback \
-		root swap swapfiles sysctl urandom ${BOOT-${OS}}
+		root swap sysctl urandom ${BOOT-${OS}}
 DEFAULT=	local netmount
 NONETWORK=	local
 SHUTDOWN=	savecache ${SHUTDOWN-${OS}}
@@ -32,7 +32,7 @@ SYSINIT-${OS}=
 BOOT-BSD=	hostid newsyslog savecore syslogd swap-blk
 
 # Generic BSD stuff
-BOOT-FreeBSD+=	hostid newsyslog savecore syslogd
+BOOT-FreeBSD+=	hostid modules newsyslog savecore syslogd
 # FreeBSD specific stuff
 BOOT-FreeBSD+=	adjkerntz dumpon modules syscons zfs zvol
 

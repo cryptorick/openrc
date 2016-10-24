@@ -29,11 +29,12 @@
 
 const char *applet = NULL;
 const char *extraopts = NULL;
-const char *getoptstring = "aclrsu" getoptstring_COMMON;
+const char *getoptstring = "aclmrsu" getoptstring_COMMON;
 const struct option longopts[] = {
 	{"all",         0, NULL, 'a'},
 	{"crashed",     0, NULL, 'c'},
 	{"list",        0, NULL, 'l'},
+	{"manual",        0, NULL, 'm'},
 	{"runlevel",    0, NULL, 'r'},
 	{"servicelist", 0, NULL, 's'},
 	{"unused",      0, NULL, 'u'},
@@ -43,6 +44,7 @@ const char * const longopts_help[] = {
 	"Show services from all run levels",
 	"Show crashed services",
 	"Show list of run levels",
+	"Show manually started services",
 	"Show the name of the current runlevel",
 	"Show service list",
 	"Show services not assigned to any runlevel",
@@ -50,7 +52,7 @@ const char * const longopts_help[] = {
 };
 const char *usagestring = ""						\
 	"Usage: rc-status [options] <runlevel>...\n"		\
-	"   or: rc-status [options] [-a | -c | -l | -r | -s | -u]";
+	"   or: rc-status [options] [-a | -c | -l | -m | -r | -s | -u]";
 
 static bool test_crashed = false;
 static RC_DEPTREE *deptree;
@@ -176,9 +178,9 @@ print_stacked_services(const char *runlevel)
 int main(int argc, char **argv)
 {
     RC_STRING *s, *l, *t, *level;
-
+	bool show_all = false;
 	char *p, *runlevel = NULL;
-	int opt, aflag = 0, retval = 0;
+	int opt, retval = 0;
 
 	test_crashed = _rc_can_find_pids();
 
@@ -187,7 +189,7 @@ int main(int argc, char **argv)
 				  (int *) 0)) != -1)
 		switch (opt) {
 		case 'a':
-			aflag++;
+			show_all = true;
 			levels = rc_runlevel_list();
 			break;
 		case 'c':
@@ -204,6 +206,27 @@ int main(int argc, char **argv)
 			levels = rc_runlevel_list();
 			TAILQ_FOREACH(l, levels, entries)
 				printf("%s\n", l->value);
+			goto exit;
+		case 'm':
+			services = rc_services_in_runlevel(NULL);
+			levels = rc_runlevel_list();
+			TAILQ_FOREACH_SAFE(s, services, entries, t) {
+				TAILQ_FOREACH(l, levels, entries)
+					if (rc_service_in_runlevel(s->value, l->value)) {
+						TAILQ_REMOVE(services, s, entries);
+						free(s->value);
+						free(s);
+						break;
+					}
+			}
+			TAILQ_FOREACH_SAFE(s, services, entries, t)
+				if (rc_service_state(s->value) &
+					(RC_SERVICE_STOPPED | RC_SERVICE_HOTPLUGGED)) {
+					TAILQ_REMOVE(services, s, entries);
+					free(s->value);
+					free(s);
+				}
+			print_services(NULL, services);
 			goto exit;
 		case 'r':
 			runlevel = rc_runlevel_get();
@@ -265,7 +288,7 @@ int main(int argc, char **argv)
 		services = NULL;
 	}
 
-	if (aflag || argc < 2) {
+	if (show_all || argc < 2) {
 		/* Show hotplugged services */
 		print_level("Dynamic", "hotplugged");
 		services = rc_services_in_state(RC_SERVICE_HOTPLUGGED);
@@ -274,7 +297,7 @@ int main(int argc, char **argv)
 		services = NULL;
 
 		/* Show manually started and unassigned depended services */
-		if (aflag) {
+		if (show_all) {
 			rc_stringlist_free(levels);
 			levels = rc_stringlist_new();
 			if (!runlevel)
@@ -331,7 +354,6 @@ int main(int argc, char **argv)
 
 exit:
 	free(runlevel);
-#ifdef DEBUG_MEMORY
 	rc_stringlist_free(alist);
 	rc_stringlist_free(needsme);
 	rc_stringlist_free(sservices);
@@ -340,7 +362,6 @@ exit:
 	rc_stringlist_free(types);
 	rc_stringlist_free(levels);
 	rc_deptree_free(deptree);
-#endif
 
 	return retval;
 }
