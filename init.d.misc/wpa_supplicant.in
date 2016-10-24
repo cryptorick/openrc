@@ -65,8 +65,11 @@ append_wireless()
 
 	iface=$(find_wireless)
 	if [ -n "$iface" ]; then
+	wnum="0"
 		for i in $iface; do
-			command_args="$command_args -i$i"
+			ifconfig wlan${wnum} create wlandev $iface
+			command_args="$command_args -iwlan${wnum}"
+			wnum=`expr $wnum + 1`
 		done
 	else
 		eerror "Could not find a wireless interface"
