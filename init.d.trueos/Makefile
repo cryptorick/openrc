@@ -1,5 +1,5 @@
 DIR=	${INITDIR}
-SRCS=	pcdm.in netif.in
+SRCS=	pcdm.in
 BIN=    ${OBJS}
 
 MK=	../mk
