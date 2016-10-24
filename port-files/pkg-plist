@@ -12,6 +12,7 @@ etc/conf.d/powerd
 etc/conf.d/rarpd
 etc/conf.d/savecore
 etc/conf.d/staticroute
+etc/conf.d/swap
 etc/conf.d/syscons
 etc/conf.d/tmpfiles
 etc/conf.d/urandom
@@ -37,6 +38,7 @@ etc/init.d/localmount
 etc/init.d/loopback
 etc/init.d/mixer
 etc/init.d/modules
+etc/init.d/modules-load
 etc/init.d/moused
 etc/init.d/named
 etc/init.d/netif
@@ -55,13 +57,13 @@ etc/init.d/rarpd
 etc/init.d/rc-enabled
 etc/init.d/root
 etc/init.d/rpcbind
+etc/init.d/runsvdir
 etc/init.d/s6-svscan
 etc/init.d/savecache
 etc/init.d/savecore
 etc/init.d/sshd
 etc/init.d/staticroute
 etc/init.d/swap
-etc/init.d/swapfiles
 etc/init.d/swclock
 etc/init.d/syscons
 etc/init.d/sysctl
@@ -91,7 +93,6 @@ etc/runlevels/boot/root
 etc/runlevels/boot/savecore
 etc/runlevels/boot/staticroute
 etc/runlevels/boot/swap
-etc/runlevels/boot/swapfiles
 etc/runlevels/boot/syscons
 etc/runlevels/boot/sysctl
 etc/runlevels/boot/syslogd
@@ -167,6 +168,7 @@ libexec/rc/sh/init.sh
 libexec/rc/sh/openrc-run.sh
 libexec/rc/sh/rc-functions.sh
 libexec/rc/sh/rc-mount.sh
+libexec/rc/sh/runit.sh
 libexec/rc/sh/s6.sh
 libexec/rc/sh/start-stop-daemon.sh
 libexec/rc/sh/supervise-daemon.sh
