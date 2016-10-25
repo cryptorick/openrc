@@ -13,7 +13,7 @@ MK=			${TOP}/mk
 
 include ${TOP}/Makefile.inc
 
-SUBDIR=		conf.d etc init.d init.d.misc init.d.pacbsd init.d.trueos local.d man scripts sh src sysctl.d
+SUBDIR=		conf.d etc init.d local.d man scripts sh src sysctl.d
 
 # Build pkgconfig or not
 MKPKGCONFIG?=	no

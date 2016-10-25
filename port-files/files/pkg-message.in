@@ -1,3 +1,0 @@
-To activate openrc, please add the following into /boot/loader.conf:
-
-init_path="/usr/local/sbin/init"
